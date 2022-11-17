@@ -1,0 +1,29 @@
+# directories
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+**/cache
+**/node_modules
+**/out
+.ssh/*
+coverage/*
+deployments/localhost/*
+# files
+*.env
+*.log
+.DS_Store
+.pnp.*
+yarn-debug.log*
+yarn-error.log*
+coverage.json
+# broadcasts
+!/broadcast
+/broadcast/*
+/broadcast/*/31337/
+.history/*
+/artifacts/*
+cache_hardhat/*
+typechain/
