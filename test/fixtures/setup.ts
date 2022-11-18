@@ -1,7 +1,7 @@
 import { deployments, getNamedAccounts, getUnnamedAccounts } from "hardhat";
 import {
-  DelegateRoyaltyEngineMock,
-  DelegateRoyaltyEngineMock__factory,
+  CanonicalRoyaltyEngineMock,
+  CanonicalRoyaltyEngineMock__factory,
   IFallbackRoyaltyConfigurable,
   IFallbackRoyaltyConfigurable__factory,
   IRoyaltyEngine,
@@ -15,7 +15,7 @@ export interface Contracts {
   FallbackConfigurable: IFallbackRoyaltyConfigurable;
   FallbackEngine: IRoyaltyEngine;
   Ownable: OwnableMock;
-  Delegate: DelegateRoyaltyEngineMock;
+  CanonicalEngine: CanonicalRoyaltyEngineMock;
 }
 
 export interface User extends Contracts {
@@ -31,10 +31,10 @@ export const setupContracts = deployments.createFixture(async ({ ethers }) => {
   const fallbackEngingContract = await IRoyaltyEngine__factory.connect(fallback.address, signer);
   const ownableMockAddress = (await deployments.deploy("OwnableMock", { from: deployer })).address;
   const ownableMockContract = await OwnableMock__factory.connect(ownableMockAddress, signer);
-  const delegateRoyaltyEngineMockAddress = (await deployments.deploy("DelegateRoyaltyEngineMock", { from: deployer }))
+  const canonicalRoyaltyEngineMockAddress = (await deployments.deploy("CanonicalRoyaltyEngineMock", { from: deployer }))
     .address;
-  const delegateRoyaltyEngineMockContract = await DelegateRoyaltyEngineMock__factory.connect(
-    delegateRoyaltyEngineMockAddress,
+  const canonicalRoyaltyEngineMockContract = await CanonicalRoyaltyEngineMock__factory.connect(
+    canonicalRoyaltyEngineMockAddress,
     signer,
   );
 
@@ -42,7 +42,7 @@ export const setupContracts = deployments.createFixture(async ({ ethers }) => {
     FallbackConfigurable: fallbackConfigurableContract,
     FallbackEngine: fallbackEngingContract,
     Ownable: ownableMockContract,
-    Delegate: delegateRoyaltyEngineMockContract,
+    CanonicalEngine: canonicalRoyaltyEngineMockContract,
   };
 
   const users: User[] = await setupUsers(await getUnnamedAccounts(), contracts);

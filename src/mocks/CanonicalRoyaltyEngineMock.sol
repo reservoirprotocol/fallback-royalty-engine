@@ -3,7 +3,7 @@ pragma solidity 0.8.17;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IRoyaltyEngine } from "../IRoyaltyEngine.sol";
 
-contract DelegateRoyaltyEngineMock is IRoyaltyEngine {
+contract CanonicalRoyaltyEngineMock is IRoyaltyEngine {
     address[] private _recipients;
     uint256[] private _amounts;
 

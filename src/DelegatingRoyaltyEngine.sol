@@ -6,8 +6,24 @@ import { IFallbackRoyaltyConfigurable } from "./IFallbackRoyaltyConfigurable.sol
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
+/** 
+ * @title Delegating Royalty Engine
+ * @author Tony Snark
+ * @dev This implementation uses a compact royalty setting representation optimised for 
+        single recipient cases. The data structure is based on a primary entry that is 
+        assumed always present when the royalty is set. This entry maintains the updated
+        total number of recipients. Recipients are kept in a flat mapping where the mapping 
+        keys are derived deterministically by concatenating the collection address bits and  
+        the recipient index in the recipient list:
+        
+        Recipient Key = | Collection address bits | Recipient index bits |
+
+        Where the recipient index of the primary recipient is 0.
+ */
 contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable, Ownable {
     using Address for address;
+
+    uint256 private constant BPS_DENOMINATOR = 10000;
 
     struct RoyaltyEntry {
         address recipient;
@@ -15,46 +31,58 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
         uint8 numberOfRecipients;
     }
 
-    IRoyaltyEngine private _delegate;
+    IRoyaltyEngine private _canonicalEngine;
     mapping(uint256 => RoyaltyEntry) private _royaltyByRecipientId;
+    /// @dev We leave this public for offchain look-ups
     mapping(address => address) public collectionAdmins;
 
-    constructor(IRoyaltyEngine delegate_) {
-        setDelegateEngine(delegate_);
+    constructor(IRoyaltyEngine canonicalEngine_) {
+        setCanonicalEngine(canonicalEngine_);
     }
 
-    function setDelegateEngine(IRoyaltyEngine delegate_) public onlyOwner {
-        emit DelegateEngineUpdated(_delegate, delegate_);
-        _delegate = delegate_;
+    /// @inheritdoc IFallbackRoyaltyConfigurable
+    function setCanonicalEngine(IRoyaltyEngine canonicalEngine_) public onlyOwner {
+        emit CanonicalEngineUpdated(_canonicalEngine, canonicalEngine_);
+        _canonicalEngine = canonicalEngine_;
     }
 
+    /// @inheritdoc IFallbackRoyaltyConfigurable
     function setCollectionAdmin(address collection, address admin) external onlyOwner {
         collectionAdmins[collection] = admin;
         emit CollectionAdminUpdated(collection, admin);
     }
 
+    /// @inheritdoc IFallbackRoyaltyConfigurable
     function setRoyalties(RoyaltyEntryInput[] calldata royalties) external onlyOwner {
         uint256 length = royalties.length;
-        for (uint256 i; i < length; i++) {
+
+        for (uint256 i; i < length; ) {
             _setRoyaltyEntry(royalties[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
+    /// @inheritdoc IFallbackRoyaltyConfigurable
     function setRoyaltyEntryWithCollectionAdmin(RoyaltyEntryInput calldata royalties) external {
         if (_resolveCollectionAdmin(royalties.collection) != msg.sender) revert NotCollectionAdmin();
         _setRoyaltyEntry(royalties);
     }
 
+    /// @dev Collection ownership has precedence on override
     function _resolveCollectionAdmin(address collection) internal view returns (address admin) {
-        admin = collectionAdmins[collection];
-        if (admin == address(0) && collection.isContract()) {
+        if (collection.isContract()) {
             try Ownable(collection).owner() returns (address owner) {
                 admin = owner;
-                // solhint-disable no-empty-blocks
-            } catch {}
+            } catch {
+                admin = collectionAdmins[collection];
+            }
         }
     }
 
+    /// @dev Royalty setting is idempotent and it overrides all previous settings for a collection
+    ///      Deletion is implemented by passing a royalty with no recipients.
     function _setRoyaltyEntry(RoyaltyEntryInput calldata royalty) private {
         address collection = royalty.collection;
         address[] calldata recipients = royalty.recipients;
@@ -67,7 +95,7 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
         }
         if (numberOfRecipients != feesInBPS.length || numberOfRecipients > type(uint8).max)
             revert IllegalRoyaltyEntry();
-
+        uint256 totalBPS = feesInBPS[0];
         _royaltyByRecipientId[uint256(uint160(collection)) << 8] = RoyaltyEntry(
             recipients[0],
             feesInBPS[0],
@@ -81,9 +109,12 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
                 0 // Ignored
             );
             unchecked {
+                totalBPS += feesInBPS[i]; //It cannot overflow: addends are 16 bits in a 256 bits accumulator
                 ++i;
             }
         }
+
+        if (totalBPS >= BPS_DENOMINATOR) revert InvalidRoyaltyAmount();
         emit FallbackRoyaltiesUpdated(collection, recipients, feesInBPS);
     }
 
@@ -92,8 +123,8 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
         uint256 tokenId,
         uint256 value
     ) external view returns (address[] memory recipients, uint256[] memory amounts) {
-        if (address(_delegate) > address(0)) {
-            (recipients, amounts) = _delegate.getRoyaltyView(collection, tokenId, value);
+        if (address(_canonicalEngine) > address(0)) {
+            (recipients, amounts) = _canonicalEngine.getRoyaltyView(collection, tokenId, value);
         }
         if (recipients.length < 1) {
             RoyaltyEntry memory entry = _royaltyByRecipientId[uint256(uint160(collection)) << 8];
@@ -102,11 +133,11 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
                 recipients = new address[](numberOfRecipients);
                 amounts = new uint256[](numberOfRecipients);
                 recipients[0] = entry.recipient;
-                amounts[0] = (entry.feesInBPS * value) / 10000;
+                amounts[0] = (entry.feesInBPS * value) / BPS_DENOMINATOR;
                 for (uint256 i = 1; i < numberOfRecipients; ) {
                     entry = _royaltyByRecipientId[(uint256(uint160(collection)) << 8) | i];
                     recipients[i] = entry.recipient;
-                    amounts[i] = (entry.feesInBPS * value) / 10000;
+                    amounts[i] = (entry.feesInBPS * value) / BPS_DENOMINATOR;
                     unchecked {
                         ++i;
                     }

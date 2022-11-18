@@ -1908,7 +1908,7 @@ __metadata:
   version: 3.0.1
   resolution: "are-we-there-yet@npm:3.0.1"
   dependencies:
-    delegates: ^1.0.0
+    canonicals: ^1.0.0
     readable-stream: ^3.6.0
   checksum: 52590c24860fa7173bedeb69a4c05fb573473e860197f618b9a28432ee4379049336727ae3a1f9c4cb083114601c1140cee578376164d0e651217a9843f9fe83
   languageName: node
@@ -3589,9 +3589,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"delegates@npm:^1.0.0":
+"canonicals@npm:^1.0.0":
   version: 1.0.0
-  resolution: "delegates@npm:1.0.0"
+  resolution: "canonicals@npm:1.0.0"
   checksum: a51744d9b53c164ba9c0492471a1a2ffa0b6727451bdc89e31627fdf4adda9d51277cfcbfb20f0a6f08ccb3c436f341df3e92631a3440226d93a8971724771fd
   languageName: node
   linkType: hard

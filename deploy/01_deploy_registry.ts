@@ -5,14 +5,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
 
-  const { deployer, delegateEngine } = await getNamedAccounts();
+  const { deployer, canonicalEngine } = await getNamedAccounts();
 
-  if (!delegateEngine) throw new Error("Delegate Engine not defined");
+  if (!canonicalEngine) throw new Error("Canonical Engine not defined");
 
   await deploy("DelegatingRoyaltyEngine", {
     from: deployer,
     log: true,
-    args: [delegateEngine],
+    args: [canonicalEngine],
   });
   return true;
 };

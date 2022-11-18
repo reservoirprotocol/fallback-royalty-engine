@@ -3,11 +3,19 @@ pragma solidity 0.8.17;
 
 import { IRoyaltyEngine } from "./IRoyaltyEngine.sol";
 
+/** 
+ * @title Fallback Royalty Engine
+ * @author Tony Snark
+ * @notice This interface represent a type of contracts which allow to have a fallback value for when 
+           royalty setting are not found on chain in the canonical Royalty engine (see https://royaltyregistry.xyz/).
+           Typically royalty values will be gathered from Opensea offchain APIs.
+ */
 interface IFallbackRoyaltyConfigurable {
     error IllegalRoyaltyEntry();
+    error InvalidRoyaltyAmount();
     error NotCollectionAdmin();
 
-    event DelegateEngineUpdated(IRoyaltyEngine indexed previousEngine, IRoyaltyEngine indexed newEngine);
+    event CanonicalEngineUpdated(IRoyaltyEngine indexed previousEngine, IRoyaltyEngine indexed newEngine);
     event CollectionAdminUpdated(address indexed collection, address indexed admin);
     event FallbackRoyaltiesUpdated(address indexed collection, address[] recipients, uint16[] feesInBPS);
 
@@ -17,11 +25,32 @@ interface IFallbackRoyaltyConfigurable {
         uint16[] feesInBPS;
     }
 
+    /**
+     * @notice Sets fallback royalties in batches overriding previous values.
+     * @dev This should be a permissioned function called by the engine owner
+     * @param royalties A batch of royalties settings
+     */
     function setRoyalties(RoyaltyEntryInput[] calldata royalties) external;
 
-    function setRoyaltyEntryWithCollectionAdmin(RoyaltyEntryInput calldata royalties) external;
+    /**
+     * @notice Allows a collection admin to set a fallback royalty for the collection
+     * @dev This should be a permissioned function called by the collection admin
+     * @param royalty New royalty settings for a collection
+     */
+    function setRoyaltyEntryWithCollectionAdmin(RoyaltyEntryInput calldata royalty) external;
 
-    function setDelegateEngine(IRoyaltyEngine delegate) external;
+    /**
+     * @notice Sets the canonical royalty engine used by this fallback engine
+     * @dev This should be a permissioned function called by the engine owner
+     * @param canonical New canonical engine
+     */
+    function setCanonicalEngine(IRoyaltyEngine canonical) external;
 
+    /**
+     * @notice Sets the admin for a collection if the collection is not 'Ownable'
+     * @dev This should be a permissioned function called by the engine owner
+     * @param collection Collection for which setting the admin
+     * @param admin Collection's admin address
+     */
     function setCollectionAdmin(address collection, address admin) external;
 }
