@@ -88,22 +88,19 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
         address[] calldata recipients = royalty.recipients;
         uint16[] calldata feesInBPS = royalty.feesInBPS;
         uint256 numberOfRecipients = recipients.length;
+        uint256 collectionId = uint256(uint160(collection)) << 8;
         // Delete royalty if no recipient set
         if (numberOfRecipients == 0) {
-            delete _royaltyByRecipientId[uint256(uint160(collection)) << 8];
+            delete _royaltyByRecipientId[collectionId];
             return;
         }
         if (numberOfRecipients != feesInBPS.length || numberOfRecipients > type(uint8).max)
             revert IllegalRoyaltyEntry();
         uint256 totalBPS = feesInBPS[0];
-        _royaltyByRecipientId[uint256(uint160(collection)) << 8] = RoyaltyEntry(
-            recipients[0],
-            feesInBPS[0],
-            uint8(numberOfRecipients)
-        );
+        _royaltyByRecipientId[collectionId] = RoyaltyEntry(recipients[0], feesInBPS[0], uint8(numberOfRecipients));
 
         for (uint256 i = 1; i < numberOfRecipients; ) {
-            _royaltyByRecipientId[(uint256(uint160(collection)) << 8) | i] = RoyaltyEntry(
+            _royaltyByRecipientId[collectionId | i] = RoyaltyEntry(
                 recipients[i],
                 feesInBPS[i],
                 0 // Ignored
@@ -127,7 +124,8 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
             (recipients, amounts) = _canonicalEngine.getRoyaltyView(collection, tokenId, value);
         }
         if (recipients.length < 1) {
-            RoyaltyEntry memory entry = _royaltyByRecipientId[uint256(uint160(collection)) << 8];
+            uint256 collectionId = uint256(uint160(collection)) << 8;
+            RoyaltyEntry memory entry = _royaltyByRecipientId[collectionId];
             if (entry.recipient != address(0)) {
                 uint8 numberOfRecipients = entry.numberOfRecipients;
                 recipients = new address[](numberOfRecipients);
@@ -135,7 +133,7 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
                 recipients[0] = entry.recipient;
                 amounts[0] = (entry.feesInBPS * value) / BPS_DENOMINATOR;
                 for (uint256 i = 1; i < numberOfRecipients; ) {
-                    entry = _royaltyByRecipientId[(uint256(uint160(collection)) << 8) | i];
+                    entry = _royaltyByRecipientId[collectionId | i];
                     recipients[i] = entry.recipient;
                     amounts[i] = (entry.feesInBPS * value) / BPS_DENOMINATOR;
                     unchecked {
