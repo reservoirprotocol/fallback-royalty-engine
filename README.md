@@ -2,8 +2,9 @@
 
 ## Motivation
 
-Forward protocol utilizes on-chain royalties, but adoption of on-chain royalties is very low. Around 26% of the top 1000 collections vs 74% on OpenSea.
-This would undermine the whole purpose of it if it can just be used to circumvent royalties.
+Adoption of on-chain royalties by NFT creators is very low. Around 26% of the top 1000 collections vs 74% on OpenSea.
+This makes it difficult for marketplaces to adopt it, because they would be missing royalties for many collections.
+If we do a one-time migration of OpenSea royalties on-chain, it would make it easier for marketplaces to switch.
 
 ## Features
 
