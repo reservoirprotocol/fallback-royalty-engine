@@ -116,6 +116,7 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
         emit FallbackRoyaltiesUpdated(collection, recipients, feesInBPS);
     }
 
+    ///@inheritdoc IRoyaltyEngine
     function getRoyaltyView(
         address collection,
         uint256 tokenId,
@@ -145,6 +146,7 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
         }
     }
 
+    ///@inheritdoc IRoyaltyLookUp
     function getRoyalties(address tokenAddress, uint256)
         external
         view
