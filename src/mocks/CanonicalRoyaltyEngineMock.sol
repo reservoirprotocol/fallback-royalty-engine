@@ -4,10 +4,10 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IRoyaltyEngine } from "../IRoyaltyEngine.sol";
 
 contract CanonicalRoyaltyEngineMock is IRoyaltyEngine {
-    address[] private _recipients;
+    address payable[] private _recipients;
     uint256[] private _amounts;
 
-    function setResponse(address[] calldata recipients_, uint256[] calldata amounts_) external {
+    function setResponse(address payable[] calldata recipients_, uint256[] calldata amounts_) external {
         _recipients = recipients_;
         _amounts = amounts_;
     }
@@ -16,7 +16,7 @@ contract CanonicalRoyaltyEngineMock is IRoyaltyEngine {
         address,
         uint256,
         uint256
-    ) external view returns (address[] memory recipients, uint256[] memory amounts) {
+    ) external view returns (address payable[] memory recipients, uint256[] memory amounts) {
         recipients = _recipients;
         amounts = _amounts;
     }

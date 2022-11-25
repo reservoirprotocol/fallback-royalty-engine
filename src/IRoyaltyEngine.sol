@@ -6,5 +6,5 @@ interface IRoyaltyEngine {
         address collection,
         uint256 tokenId,
         uint256 value
-    ) external view returns (address[] memory recipients, uint256[] memory amounts);
+    ) external view returns (address payable[] memory recipients, uint256[] memory amounts);
 }

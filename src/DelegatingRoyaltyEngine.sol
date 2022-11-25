@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 import { IRoyaltyEngine } from "./IRoyaltyEngine.sol";
 import { IFallbackRoyaltyConfigurable } from "./IFallbackRoyaltyConfigurable.sol";
+import { IRoyaltyLookUp } from "./IRoyaltyLookUp.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
@@ -20,13 +21,13 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
         Where the recipient index of the primary recipient is 0.
  */
-contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable, Ownable {
+contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable, IRoyaltyLookUp, Ownable {
     using Address for address;
 
     uint256 private constant BPS_DENOMINATOR = 10000;
 
     struct RoyaltyEntry {
-        address recipient;
+        address payable recipient;
         uint16 feesInBPS;
         uint8 numberOfRecipients;
     }
@@ -85,7 +86,7 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
     ///      Deletion is implemented by passing a royalty with no recipients.
     function _setRoyaltyEntry(RoyaltyEntryInput calldata royalty) private {
         address collection = royalty.collection;
-        address[] calldata recipients = royalty.recipients;
+        address payable[] calldata recipients = royalty.recipients;
         uint16[] calldata feesInBPS = royalty.feesInBPS;
         uint256 numberOfRecipients = recipients.length;
         uint256 collectionId = uint256(uint160(collection)) << 8;
@@ -119,7 +120,7 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
         address collection,
         uint256 tokenId,
         uint256 value
-    ) external view returns (address[] memory recipients, uint256[] memory amounts) {
+    ) external view returns (address payable[] memory recipients, uint256[] memory amounts) {
         if (address(_canonicalEngine) > address(0)) {
             (recipients, amounts) = _canonicalEngine.getRoyaltyView(collection, tokenId, value);
         }
@@ -128,7 +129,7 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
             RoyaltyEntry memory entry = _royaltyByRecipientId[collectionId];
             if (entry.recipient != address(0)) {
                 uint8 numberOfRecipients = entry.numberOfRecipients;
-                recipients = new address[](numberOfRecipients);
+                recipients = new address payable[](numberOfRecipients);
                 amounts = new uint256[](numberOfRecipients);
                 recipients[0] = entry.recipient;
                 amounts[0] = (entry.feesInBPS * value) / BPS_DENOMINATOR;
@@ -139,6 +140,31 @@ contract DelegatingRoyaltyEngine is IRoyaltyEngine, IFallbackRoyaltyConfigurable
                     unchecked {
                         ++i;
                     }
+                }
+            }
+        }
+    }
+
+    function getRoyalties(address tokenAddress, uint256)
+        external
+        view
+        override
+        returns (address payable[] memory recipients, uint256[] memory feeInBPS)
+    {
+        uint256 collectionId = uint256(uint160(tokenAddress)) << 8;
+        RoyaltyEntry memory entry = _royaltyByRecipientId[collectionId];
+        if (entry.recipient != address(0)) {
+            uint8 numberOfRecipients = entry.numberOfRecipients;
+            recipients = new address payable[](numberOfRecipients);
+            feeInBPS = new uint256[](numberOfRecipients);
+            recipients[0] = payable(entry.recipient);
+            feeInBPS[0] = entry.feesInBPS;
+            for (uint256 i = 1; i < numberOfRecipients; ) {
+                entry = _royaltyByRecipientId[collectionId | i];
+                recipients[i] = payable(entry.recipient);
+                feeInBPS[i] = entry.feesInBPS;
+                unchecked {
+                    ++i;
                 }
             }
         }

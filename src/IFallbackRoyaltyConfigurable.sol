@@ -17,11 +17,11 @@ interface IFallbackRoyaltyConfigurable {
 
     event CanonicalEngineUpdated(IRoyaltyEngine indexed previousEngine, IRoyaltyEngine indexed newEngine);
     event CollectionAdminUpdated(address indexed collection, address indexed admin);
-    event FallbackRoyaltiesUpdated(address indexed collection, address[] recipients, uint16[] feesInBPS);
+    event FallbackRoyaltiesUpdated(address indexed collection, address payable[] recipients, uint16[] feesInBPS);
 
     struct RoyaltyEntryInput {
         address collection;
-        address[] recipients;
+        address payable[] recipients;
         uint16[] feesInBPS;
     }
 

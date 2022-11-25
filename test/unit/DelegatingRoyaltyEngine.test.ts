@@ -194,4 +194,18 @@ describe("Delegating Royalty Engine Tests", function () {
       }
     });
   });
+
+  describe("Royalties Retrieval", async function () {
+    it("retrieves the correct royalties", async function () {
+      const numberOfRecipients = 10;
+      const royalties = createRandomRoyalties(1, numberOfRecipients);
+      await deployer.FallbackConfigurable.setRoyalties(royalties);
+
+      const royalty = await contracts.RoyaltyLookUp.getRoyalties(royalties[0].collection, 0);
+      expect(royalty.recipients).to.be.eql(royalties[0].recipients);
+      for (let i = 0; i < numberOfRecipients; i++) {
+        expect(royalty.feeInBPS[i]).to.be.eql(bigN(royalties[0].feesInBPS[i] as BigNumberish));
+      }
+    });
+  });
 });
