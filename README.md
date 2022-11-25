@@ -1,4 +1,4 @@
-# Fallback Royalty Engine
+# Fallback Royalty Look Up
 
 ## Motivation
 
@@ -7,9 +7,8 @@ This would undermine the whole purpose of it if it can just be used to circumven
 
 ## Features
 
-The fallback engine implements the following features
+The fallback look up implements the following features
 
-- Returns the royalty amount as set in the canonical engine if any.
 - Allows to store fallback royalty in a compact manner.
 - Allows on chain querying of royalties with their fall back.
 - Allows self service royalty setting for the provable owner of a collection<sub>\*</sub>.

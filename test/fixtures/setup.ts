@@ -1,24 +1,21 @@
 import { deployments, getNamedAccounts, getUnnamedAccounts } from "hardhat";
 import {
-  CanonicalRoyaltyEngineMock,
-  CanonicalRoyaltyEngineMock__factory,
   IFallbackRoyaltyConfigurable,
   IFallbackRoyaltyConfigurable__factory,
-  IRoyaltyEngine,
-  IRoyaltyEngine__factory,
   IRoyaltyLookUp,
   IRoyaltyLookUp__factory,
   OwnableMock,
   OwnableMock__factory,
+  NonOwnableMock,
+  NonOwnableMock__factory,
 } from "../../typechain";
 import { setupUser, setupUsers } from "./users";
 
 export interface Contracts {
   FallbackConfigurable: IFallbackRoyaltyConfigurable;
-  FallbackEngine: IRoyaltyEngine;
   RoyaltyLookUp: IRoyaltyLookUp;
   Ownable: OwnableMock;
-  CanonicalEngine: CanonicalRoyaltyEngineMock;
+  NonOwnable: NonOwnableMock;
 }
 
 export interface User extends Contracts {
@@ -28,26 +25,20 @@ export interface User extends Contracts {
 export const setupContracts = deployments.createFixture(async ({ ethers }) => {
   const { deployer } = await getNamedAccounts();
   await deployments.fixture(["Deployment"]);
-  const fallback = await deployments.get("DelegatingRoyaltyEngine");
+  const fallback = await deployments.get("FallbackRoyaltyLookUp");
   const signer = (await ethers.getSigners())[0];
   const fallbackConfigurableContract = await IFallbackRoyaltyConfigurable__factory.connect(fallback.address, signer);
-  const fallbackengineContract = await IRoyaltyEngine__factory.connect(fallback.address, signer);
   const royaltyLookupContract = await IRoyaltyLookUp__factory.connect(fallback.address, signer);
   const ownableMockAddress = (await deployments.deploy("OwnableMock", { from: deployer })).address;
   const ownableMockContract = await OwnableMock__factory.connect(ownableMockAddress, signer);
-  const canonicalRoyaltyEngineMockAddress = (await deployments.deploy("CanonicalRoyaltyEngineMock", { from: deployer }))
-    .address;
-  const canonicalRoyaltyEngineMockContract = await CanonicalRoyaltyEngineMock__factory.connect(
-    canonicalRoyaltyEngineMockAddress,
-    signer,
-  );
+  const nonOwnableMockAddress = (await deployments.deploy("NonOwnableMock", { from: deployer })).address;
+  const nonOwnableMockContract = await NonOwnableMock__factory.connect(nonOwnableMockAddress, signer);
 
   const contracts: Contracts = {
     FallbackConfigurable: fallbackConfigurableContract,
-    FallbackEngine: fallbackengineContract,
     Ownable: ownableMockContract,
-    CanonicalEngine: canonicalRoyaltyEngineMockContract,
     RoyaltyLookUp: royaltyLookupContract,
+    NonOwnable: nonOwnableMockContract,
   };
 
   const users: User[] = await setupUsers(await getUnnamedAccounts(), contracts);

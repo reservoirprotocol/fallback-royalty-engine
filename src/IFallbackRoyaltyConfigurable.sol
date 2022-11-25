@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import { IRoyaltyEngine } from "./IRoyaltyEngine.sol";
-
 /** 
- * @title Fallback Royalty Engine
+ * @title Fallback Royalty Look Up
  * @author Tony Snark
  * @notice This interface represent a type of contracts which allow to have a fallback value for when 
            royalty setting are not found on chain in the canonical Royalty engine (see https://royaltyregistry.xyz/).
@@ -15,7 +13,6 @@ interface IFallbackRoyaltyConfigurable {
     error InvalidRoyaltyAmount();
     error NotCollectionAdmin();
 
-    event CanonicalEngineUpdated(IRoyaltyEngine indexed previousEngine, IRoyaltyEngine indexed newEngine);
     event CollectionAdminUpdated(address indexed collection, address indexed admin);
     event FallbackRoyaltiesUpdated(address indexed collection, address payable[] recipients, uint16[] feesInBPS);
 
@@ -38,13 +35,6 @@ interface IFallbackRoyaltyConfigurable {
      * @param royalty New royalty settings for a collection
      */
     function setRoyaltyEntryWithCollectionAdmin(RoyaltyEntryInput calldata royalty) external;
-
-    /**
-     * @notice Sets the canonical royalty engine used by this fallback engine
-     * @dev This should be a permissioned function called by the engine owner
-     * @param canonical New canonical engine
-     */
-    function setCanonicalEngine(IRoyaltyEngine canonical) external;
 
     /**
      * @notice Sets the admin for a collection if the collection is not 'Ownable'

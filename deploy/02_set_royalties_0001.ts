@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   if (!ROYALTIES_0001.validated) throw new Error("Royalties not validated yet");
 
   await execute(
-    "DelegatingRoyaltyEngine",
+    "FallbackRoyaltyLookUp",
     {
       from: deployer,
       log: true,

@@ -2,7 +2,8 @@ import { setupContracts, User } from "../fixtures/setup";
 import { autoMining } from "../utils";
 import { createRandomRoyalties } from "../utils/data";
 
-describe("Delegating Royalty Engine Performance Tests", function () {
+// To be run with gas profiling on
+describe("Fallback Royalty Look Up Performance Tests", function () {
   let deployer: User;
 
   beforeEach(async () => {

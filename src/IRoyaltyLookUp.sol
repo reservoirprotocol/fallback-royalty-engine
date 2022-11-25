@@ -3,7 +3,7 @@
 pragma solidity 0.8.17;
 
 /**
- * @title Royalty lookup
+ * @title Royalty Look Up
  * @notice This interface represent a type of contracts which allow royalty look up for a collection and a token id.
  */
 interface IRoyaltyLookUp {
@@ -14,10 +14,10 @@ interface IRoyaltyLookUp {
      * @param tokenAddress Token for which to retrieve the royalty
      * @param tokenId Individual Token Id for which to retrieve the royalty. This is optional.
      * @return recipients List of recipients for the royalty. If empty, no royalty is set.
-     * @return feeInBPS List of fees express in bps to send to the recipients at the same index
+     * @return feesInBPS List of fees express in bps to send to the recipients at the same index
      */
     function getRoyalties(address tokenAddress, uint256 tokenId)
         external
         view
-        returns (address payable[] memory recipients, uint256[] memory feeInBPS);
+        returns (address payable[] memory recipients, uint256[] memory feesInBPS);
 }

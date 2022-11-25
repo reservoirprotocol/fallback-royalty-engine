@@ -112,10 +112,6 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0,
     },
-    canonicalEngine: {
-      1: "0x0385603ab55642cb4Dd5De3aE9e306809991804f",
-      5: "0xe7c9Cb6D966f76f3B5142167088927Bf34966a1f",
-    },
   },
   mocha: {
     timeout: 60000,

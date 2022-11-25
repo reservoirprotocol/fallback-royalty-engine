@@ -5,18 +5,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
 
-  const { deployer, canonicalEngine } = await getNamedAccounts();
+  const { deployer } = await getNamedAccounts();
 
-  if (!canonicalEngine) throw new Error("Canonical Engine not defined");
-
-  await deploy("DelegatingRoyaltyEngine", {
+  await deploy("FallbackRoyaltyLookUp", {
     from: deployer,
     log: true,
-    args: [canonicalEngine],
   });
   return true;
 };
 
 export default func;
-func.id = "DelegatingRoyaltyEngineDeployment";
+func.id = "FallbackRoyaltyLookUpDeployment";
 func.tags = ["Deployment"];
